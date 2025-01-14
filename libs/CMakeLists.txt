@@ -28,16 +28,16 @@ include_directories(
             ${MAVLINK_DIR}/inc/mavlink/v2.0
         )
 
-file(GLOB_RECURSE SOURCES 
+file(GLOB_RECURSE SOURCES
             ${CMAKE_CURRENT_SOURCE_DIR}/third-party/mavlink/src/*.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/payloadSdkInterface.cpp 
+            ${CMAKE_CURRENT_SOURCE_DIR}/payloadSdkInterface.cpp
             )
 
 # PayloadSDK library build
 add_library(${PROJECT_NAME} STATIC ${SOURCES} ${LIB_MAVLINK}) # Static by default
 target_link_libraries(${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME}
-    PUBLIC 
+    PUBLIC
             ${CMAKE_CURRENT_SOURCE_DIR}
             ${GST_INCLUDE_DIRS}
             ${CF_HEADER_DIRS}
@@ -47,3 +47,8 @@ target_include_directories(${PROJECT_NAME}
             ${MAVLINK_DIR}/inc
             ${MAVLINK_DIR}/inc/mavlink/v2.0
         )
+# Install headers
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/libs/ DESTINATION include/PayloadSdk)
+
+# Install the built library
+install(TARGETS PayloadSDK DESTINATION lib)
