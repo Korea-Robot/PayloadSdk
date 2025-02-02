@@ -98,7 +98,7 @@ initialize_defaults()
     // Initialize attributes
     target_ip = "127.0.0.1";
     rx_port  = 14550;
-    
+
     tx_port  = -1;
 
     is_open = false;
@@ -118,52 +118,40 @@ initialize_defaults()
 // ------------------------------------------------------------------------------
 //   Read from UDP
 // ------------------------------------------------------------------------------
-int
-UDP_Port::
-read_message(std::queue<mavlink_message_t> &read_msg_q)
+int UDP_Port::read_message(std::queue<mavlink_message_t> &read_msg_q)
 {
-    uint8_t          cp;
+    uint8_t cp;
     mavlink_status_t status;
-    uint8_t          msgReceived = 0;
+    uint8_t msgReceived = 0;
 
-    // --------------------------------------------------------------------------
-    //   READ FROM PORT
-    // --------------------------------------------------------------------------
-
-    // this function locks the port during read
+    // Attempt to read from the port (this call locks the port internally)
     int result = _read_port(cp);
 
-    // --------------------------------------------------------------------------
-    //   PARSE MESSAGE
-    // --------------------------------------------------------------------------
-    mavlink_message_t buf_message;
-    if (result > 0){
-        
-        for(int i=0; i<result; i++)
-        {
-            // the parsing
-            // msgReceived = mavlink_parse_char(mav_channel, cp, &buf_message, &status);
-            uint8_t result = mavlink_parse_char(mav_channel, buff[i], &buf_message, &status);
-
-            if(result){
+    // If data was read, parse each byte into a MAVLink message.
+    if (result > 0) {
+        mavlink_message_t buf_message;
+        for (int i = 0; i < result; i++) {
+            // Parse each byte from the buffer.
+            uint8_t parsed = mavlink_parse_char(mav_channel, buff[i], &buf_message, &status);
+            if (parsed) {
                 read_msg_q.push(buf_message);
             }
-
         }
     }
-    // Couldn't read from port
-    else
-    {
-        fprintf(stderr, "ERROR: Could not read, res = %d, errno = %d : %m\n", result, errno);
+    // If no data was read...
+    else {
+        // Only print an error if the port is still open.
+        // (If the port has been closed, we expect read operations to fail.)
+        if (is_open) {  // or use "if (sock >= 0)" if you prefer checking the file descriptor.
+            fprintf(stderr, "ERROR: Could not read, res = %d, errno = %d : %m\n", result, errno);
+        }
     }
 
-    // Done!
-    
-    if(read_msg_q.empty()) msgReceived = 0;
-    else msgReceived = 1;
-
+    // Return 1 if at least one MAVLink message was parsed; otherwise, return 0.
+    msgReceived = read_msg_q.empty() ? 0 : 1;
     return msgReceived;
 }
+
 // ------------------------------------------------------------------------------
 //   Write to UDP
 // ------------------------------------------------------------------------------
@@ -218,7 +206,7 @@ start()
     // addr.sin_addr.s_addr = inet_addr(target_ip);
     // addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_addr.s_addr = (INADDR_ANY);
-    
+
     addr.sin_port = htons(rx_port);
 
     if (bind(sock, (struct sockaddr *) &addr, sizeof(struct sockaddr)))
@@ -286,61 +274,61 @@ int UDP_Port::get_mavlink_version(){
 // ------------------------------------------------------------------------------
 //   Read Port with Lock
 // ------------------------------------------------------------------------------
-int
-UDP_Port::
-_read_port(uint8_t &cp)
+int UDP_Port::_read_port(uint8_t &cp)
 {
-
-    socklen_t len;
-
-    // Lock
     pthread_mutex_lock(&lock);
-        int result = -1;
-        struct sockaddr_in addr;
-        len = sizeof(struct sockaddr_in);
-        result = recvfrom(sock, &buff, BUFF_LEN, 0, (struct sockaddr *)&addr, &len);
-        
-        // printf("%s %d \n", __func__, result);
-    #if (UDP_MODE == UDP_SERVER)
-        if(tx_port < 0){
-            if(strcmp(inet_ntoa(addr.sin_addr), target_ip) == 0){
-                tx_port = ntohs(addr.sin_port);
-                printf("Got first packet, sending to %s:%i\n", target_ip, rx_port);
-            }else{
-                printf("ERROR: Got packet from %s:%i but listening on %s\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), target_ip);
-            }
+
+    // Check if the socket is closed
+    if (sock < 0) {
+        pthread_mutex_unlock(&lock);
+        // Return 0 to indicate no data, and avoid logging an error.
+        return 0;
+    }
+
+    int result = -1;
+    struct sockaddr_in addr;
+    socklen_t len = sizeof(struct sockaddr_in);
+    result = recvfrom(sock, &buff, BUFF_LEN, 0, (struct sockaddr *)&addr, &len);
+
+#if (UDP_MODE == UDP_SERVER)
+    if(tx_port < 0){
+        if(strcmp(inet_ntoa(addr.sin_addr), target_ip) == 0){
+            tx_port = ntohs(addr.sin_port);
+            printf("Got first packet, sending to %s:%i\n", target_ip, rx_port);
+        } else {
+            printf("ERROR: Got packet from %s:%i but listening on %s\n", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port), target_ip);
         }
-    #endif
+    }
+#endif
 
-    // Unlock
     pthread_mutex_unlock(&lock);
-
     return result;
 }
+
 
 
 // ------------------------------------------------------------------------------
 //   Write Port with Lock
 // ------------------------------------------------------------------------------
-int
-UDP_Port::
-_write_port(char *buf, unsigned len)
+int UDP_Port::_write_port(char *buf, unsigned len)
 {
-    // Write packet via UDP link
+    // Check if the socket is valid (open)
+    if (sock < 0) {
+        fprintf(stderr, "ERROR: Socket is closed, cannot write message.\n");
+        return -1;
+    }
+
     int bytesWritten = 0;
-    if(tx_port > 0){
+    if (tx_port > 0) {
         struct sockaddr_in addr;
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
         addr.sin_addr.s_addr = inet_addr(target_ip);
         addr.sin_port = htons(tx_port);
         bytesWritten = sendto(sock, buf, len, 0, (struct sockaddr*)&addr, sizeof(struct sockaddr_in));
-        // printf("sendto: %s \t %i\n",target_ip,tx_port);
-    }else{
+    } else {
         printf("ERROR: Sending before first packet received!\n");
         bytesWritten = -1;
     }
     return bytesWritten;
 }
-
-

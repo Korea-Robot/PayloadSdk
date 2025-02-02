@@ -87,7 +87,6 @@ static long long _getElapsedTimeInMs(){
 /* PayloadSDK log.
    class: must be a pointer to class
  */
-// #define SDK_DEBUG
 #ifdef SDK_DEBUG
 #define SDK_LOG(fmt, ...)               \
     printf("[%lld] SDK %s(): " fmt "\n",   \
@@ -98,7 +97,6 @@ static long long _getElapsedTimeInMs(){
 #define SDK_LOG(fmt, ...)
     ;
 #endif
-
 class PayloadSdkInterface
 {
 public:
@@ -133,7 +131,7 @@ public:
     void checkPayloadConnection();
 
     /**
-     * Check new message 
+     * Check new message
      **/
     uint8_t getNewMewssage(mavlink_message_t& new_msg);
 

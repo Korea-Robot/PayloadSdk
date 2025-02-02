@@ -84,7 +84,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(JSONCPP jsoncpp)
 find_package(CURL REQUIRED)
 
-#include 
+#include
 include_directories(${PAYLOADSDKLIB_DIR}
                     ${PAYLOADSDKLIB_DIR}/third-party/mavlink/include
                     ${PAYLOADSDKLIB_DIR}/gSDK/src/mavlink/include/mavlink/v2.0
@@ -93,7 +93,7 @@ include_directories(${PAYLOADSDKLIB_DIR}
                     ${CURL_INCLUDE_DIR}
                     )
 
-# build examples 
+# build examples
 foreach(entry ${EXAMPLES})
   string(REPLACE ".cpp" "" target ${entry})
   add_executable(${target} ${target}.cpp ${SOURCES})
@@ -101,7 +101,7 @@ foreach(entry ${EXAMPLES})
   target_link_libraries(${target}
                      PayloadSDK
                      ${CMAKE_THREAD_LIBS_INIT}
-                     ${GST_LIBRARIES} 
+                     ${GST_LIBRARIES}
                      ${JSONCPP_LIBRARIES}
                      ${CURL_LIBRARIES}
                      stdc++fs
@@ -111,3 +111,16 @@ foreach(entry ${EXAMPLES})
 #           RUNTIME DESTINATION usr/bin/q_payload/app-payloadsdk/example)
 
 endforeach()
+
+# Add a Python extension module using pybind11
+find_package(pybind11 REQUIRED)
+pybind11_add_module(pypayload pysdk.cpp)
+target_link_libraries(pypayload
+    PRIVATE
+        PayloadSDK
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${GST_LIBRARIES}
+        ${JSONCPP_LIBRARIES}
+        ${CURL_LIBRARIES}
+        stdc++fs
+)
