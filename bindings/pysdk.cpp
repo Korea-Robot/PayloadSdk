@@ -29,34 +29,18 @@ public:
     PyPayloadSDK() {
         spdlog::debug("PyPayloadSDK constructor entered");
         // Create the underlying SDK object using the global connection settings.
-        sdk = new PayloadSdkInterface(s_conn);
+        sdk = std::make_shared<PayloadSdkInterface>(s_conn);
         spdlog::debug("PayloadSdkInterface created");
         spdlog::debug("PyPayloadSDK constructor exited");
     }
 
-    ~PyPayloadSDK() {
-        spdlog::debug("PyPayloadSDK destructor entered");
-        // Clean up the connection.
-        sdk->sdkQuit();
-        delete sdk;
-        spdlog::debug("PyPayloadSDK destructor exited");
-    }
-
-    // Initialize connection and check connection status.
+    ~PyPayloadSDK() = default;
     void initialize() {
         spdlog::debug("PyPayloadSDK::initialize() entered");
-        try {
-            sdk->sdkInitConnection();
-            spdlog::debug("sdk->sdkInitConnection() called");
-            sdk->checkPayloadConnection();
-            spdlog::debug("sdk->checkPayloadConnection() called");
-        } catch (int error) {
-            spdlog::error("initialize() error: {}", error);
-            throw std::runtime_error("initialize() error: " + std::to_string(error));
-        }
+        sdk->sdkInitConnection();
+        spdlog::debug("sdk->sdkInitConnection() called");
         spdlog::debug("PyPayloadSDK::initialize() exited");
     }
-
     // Capture an image.
     void captureImage() {
         spdlog::debug("PyPayloadSDK::captureImage() entered");
@@ -160,7 +144,7 @@ public:
         spdlog::debug("PyPayloadSDK::setGimbalAngle() entered");
         try {
             sdk->setGimbalSpeed(pitch, roll, yaw, INPUT_ANGLE);
-            spdlog::debug("sdk->setGimbalSpeed() called with INPUT_ANGLE");
+            spdlog::debug("sdk->setGimbalAngle() called with INPUT_ANGLE");
         } catch (int error) {
             spdlog::error("setGimbalAngle() error: {}", error);
             throw std::runtime_error("setGimbalAngle() error: " + std::to_string(error));
@@ -174,7 +158,7 @@ public:
         spdlog::debug("PyPayloadSDK::setGimbalSpeed() entered");
         try {
             sdk->setGimbalSpeed(pitch, roll, yaw, INPUT_SPEED);
-            spdlog::debug("sdk->setGimbalSpeed() called with INPUT_SPEED");
+            spdlog::debug("sdk->setGimbal Speed() called with INPUT_SPEED");
         } catch (int error) {
             spdlog::error("setGimbalSpeed() error: {}", error);
             throw std::runtime_error("setGimbalSpeed() error: " + std::to_string(error));
@@ -199,14 +183,14 @@ public:
     }
 
 private:
-    PayloadSdkInterface* sdk;
+    std::shared_ptr<PayloadSdkInterface> sdk;
 };
 
 PYBIND11_MODULE(pypayload, m) {
     m.doc() = "Python bindings for the PayloadSDK with modular abstraction";
 
-    // Expose the PyPayloadSDK class and its methods.
-    py::class_<PyPayloadSDK>(m, "PyPayloadSDK")
+    // Bind using shared_ptr as the holder type.
+    py::class_<PyPayloadSDK, std::shared_ptr<PyPayloadSDK>>(m, "PyPayloadSDK")
         .def(py::init<>())
         .def("initialize", &PyPayloadSDK::initialize, "Initialize the payload connection")
         .def("capture_image", &PyPayloadSDK::captureImage, "Capture an image")
