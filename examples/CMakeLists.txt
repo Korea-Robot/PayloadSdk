@@ -111,16 +111,3 @@ foreach(entry ${EXAMPLES})
 #           RUNTIME DESTINATION usr/bin/q_payload/app-payloadsdk/example)
 
 endforeach()
-
-# Add a Python extension module using pybind11
-find_package(pybind11 REQUIRED)
-pybind11_add_module(pypayload pysdk.cpp)
-target_link_libraries(pypayload
-    PRIVATE
-        PayloadSDK
-        ${CMAKE_THREAD_LIBS_INIT}
-        ${GST_LIBRARIES}
-        ${JSONCPP_LIBRARIES}
-        ${CURL_LIBRARIES}
-        stdc++fs
-)

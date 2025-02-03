@@ -1,1 +1,1 @@
-export PYTHONPATH=/home/krm/PayloadSdk/build/examples:$PYTHONPATH
+export PYTHONPATH=/home/krm/PayloadSdk/build/bindings:$PYTHONPATH
