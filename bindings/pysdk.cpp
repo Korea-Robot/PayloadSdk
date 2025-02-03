@@ -138,6 +138,12 @@ public:
         }
         spdlog::debug("PyPayloadSDK::setCameraZoom() exited");
     }
+    void setOSDMode(uint32_t mode) {
+        spdlog::debug("PyPayloadSDK::setOSDMode() entered");
+        sdk->setPayloadCameraParam(PAYLOAD_CAMERA_VIDEO_OSD_MODE, mode, PARAM_TYPE_UINT32);
+        spdlog::debug("sdk->setPayloadCameraParam() called");
+        spdlog::debug("PyPayloadSDK::setOSDMode() exited");
+    }
 
     // Set gimbal angle (position control).
     // This method calls the SDK function with INPUT_ANGLE mode.
@@ -166,7 +172,17 @@ public:
         }
         spdlog::debug("PyPayloadSDK::setGimbalSpeed() exited");
     }
-
+    void setGimbalMode(uint32_t mode) {
+        spdlog::debug("PyPayloadSDK::setGimbalMode() entered");
+        try {
+            sdk->setPayloadCameraParam(PAYLOAD_CAMERA_GIMBAL_MODE, mode, PARAM_TYPE_UINT32);
+            spdlog::debug("sdk->setPayloadCameraParam() called");
+        } catch (int error) {
+            spdlog::error("setGimbalMode() error: {}", error);
+            throw std::runtime_error("setGimbalMode() error: " + std::to_string(error));
+        }
+        spdlog::debug("PyPayloadSDK::setGimbalMode() exited");
+    }
     // Set payload camera parameter with detailed logging.
     void setChangeViewSource(uint32_t view_source) {
         spdlog::debug("PyPayloadSDK::setChangeViewSource() entered");
@@ -220,8 +236,12 @@ PYBIND11_MODULE(pypayload, m) {
              py::arg("pitch"), py::arg("roll"), py::arg("yaw"))
         .def("set_gimbal_speed", &PyPayloadSDK::setGimbalSpeed, "Set gimbal speed (rate control)",
              py::arg("pitch"), py::arg("roll"), py::arg("yaw"))
+        .def("set_gimbal_mode", &PyPayloadSDK::setGimbalMode, "Set gimbal mode",
+             py::arg("mode"))
         .def("set_change_view_source", &PyPayloadSDK::setChangeViewSource, "Set change view source",
              py::arg("view_source"))
+        .def("set_osd_mode", &PyPayloadSDK::setOSDMode, "Set OSD mode",
+             py::arg("mode"))
         .def("set_payload_camera_param", &PyPayloadSDK::setPayloadCameraParam,
              "Set payload camera parameter with detailed logging",
              py::arg("param_id"), py::arg("param_value"), py::arg("param_type"));
