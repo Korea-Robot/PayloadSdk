@@ -46,16 +46,16 @@ int main(int argc, char *argv[]){
 	my_payload->setParamRate(PARAM_EO_ZOOM_LEVEL, 1000);
 	my_payload->setParamRate(PARAM_IR_ZOOM_LEVEL, 1000);
 
-    #if defined VIO
-	// set the interval for param update
+    // #if defined VIO
+	// // set the interval for param update
 	my_payload->setParamRate(PARAM_LRF_RANGE, 1000);
 	my_payload->setParamRate(PARAM_LRF_OFSET_X, 1000);
 	my_payload->setParamRate(PARAM_LRF_OFSET_Y, 1000);
 
-	my_payload->setParamRate(PARAM_TARGET_COOR_LON, 1000);
-	my_payload->setParamRate(PARAM_TARGET_COOR_LAT, 1000);
-	my_payload->setParamRate(PARAM_TARGET_COOR_ALT, 1000);
-    #endif /* VIO */
+	my_payload->setParamRate(PARAM_TARGET_COOR_LON, 2000);
+	my_payload->setParamRate(PARAM_TARGET_COOR_LAT, 2000);
+	my_payload->setParamRate(PARAM_TARGET_COOR_ALT, 2000);
+    // #endif /* VIO */
 
 
 	while(!time_to_exit){
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]){
 		usleep(10000);
 	}
 
-    
+
 	return 0;
 }
 
@@ -84,9 +84,9 @@ void quit_handler( int sig ){
     exit(0);
 }
 
-  
+
 void onPayloadStatusChanged(int event, double* param){
-	
+
 	switch(event){
 	case PAYLOAD_GB_ATTITUDE:{
 		// param[0]: pitch

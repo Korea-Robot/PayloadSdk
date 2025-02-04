@@ -24,7 +24,7 @@ endif(ZIO)
 
 find_package(PkgConfig REQUIRED)
 #Use Pkg-config to configure GStreamer
-pkg_search_module(GLIB REQUIRED glib-2.0) 
+pkg_search_module(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GST REQUIRED
                     gstreamer-1.0
                     gstreamer-video-1.0
@@ -32,7 +32,7 @@ pkg_check_modules(GST REQUIRED
                     )
 
 add_subdirectory(libs)
-
+add_subdirectory(bindings)
 # examples
 add_subdirectory(examples)
 
